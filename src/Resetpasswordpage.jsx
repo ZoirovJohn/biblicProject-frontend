@@ -19,6 +19,9 @@ export default function ResetPasswordPage() {
       }).then(() => setTokenReady(true));
     }
   }, []);
+  //as
+  console.log("aa");
+  
 
   const handleReset = async () => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
