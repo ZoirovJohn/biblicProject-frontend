@@ -1,8 +1,7 @@
-// src/SignupPage.jsx
 import React, { useState } from 'react';
-import './Loginpage.css';
+import '../Styles/Signuppage.css';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('');
@@ -22,7 +21,7 @@ export default function SignupPage() {
       return;
     }
 
-    const { data: signupData, error: signupError } = await supabase.auth.signUp({
+    const { error: signupError } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -32,8 +31,7 @@ export default function SignupPage() {
       return;
     }
 
-    // Insert user details into custom users table
-    const { data: insertData, error: insertError } = await supabase.from('users').insert([
+    const { error: insertError } = await supabase.from('users').insert([
       {
         full_name: fullName,
         gender: gender,
@@ -52,10 +50,10 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <img src="/bot1.png" alt="Buddy Bot" className="login-bot" />
+    <div className="signup-page">
+      <div className="signup-card">
+        <div className="signup-header">
+          <img src="/bot1.png" alt="Buddy Bot" className="signup-bot" />
           <h2>Create your <span>Bot Account</span></h2>
         </div>
         <form onSubmit={handleSignup}>
@@ -66,16 +64,43 @@ export default function SignupPage() {
             onChange={(e) => setFullName(e.target.value)}
             required
           />
-          <select
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-            required
-          >
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
+
+          <div className="gender-options">
+            <label className="gender-label">
+              <input
+                type="radio"
+                name="gender"
+                value="male"
+                checked={gender === 'male'}
+                onChange={(e) => setGender(e.target.value)}
+                required
+              />
+              Male
+            </label>
+            <label className="gender-label">
+              <input
+                type="radio"
+                name="gender"
+                value="female"
+                checked={gender === 'female'}
+                onChange={(e) => setGender(e.target.value)}
+                required
+              />
+              Female
+            </label>
+            <label className="gender-label">
+              <input
+                type="radio"
+                name="gender"
+                value="other"
+                checked={gender === 'other'}
+                onChange={(e) => setGender(e.target.value)}
+                required
+              />
+              Other
+            </label>
+          </div>
+
           <input
             type="text"
             placeholder="Username"

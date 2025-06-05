@@ -1,0 +1,146 @@
+/* signuppage.css */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #1f1f2e, #2a2a3d);
+  overflow-x: hidden;
+}
+
+.signup-page {
+  min-height: 100vh;
+  background: inherit;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.signup-card {
+  background-color: #23232f;
+  padding: 40px 35px;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 12px 30px rgba(15, 15, 30, 0.35);
+  color: white;
+}
+
+
+/* Header */
+.signup-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.signup-header h2 {
+  font-weight: 600;
+  font-size: 1.7rem;
+  color: white;
+}
+
+.signup-header h2 span {
+  color: #4c8bf5;
+}
+
+.signup-bot {
+  width: 80px;
+  margin-bottom: 10px;
+}
+
+/* Form Inputs */
+.signup-card form input[type="text"],
+.signup-card form input[type="email"],
+.signup-card form input[type="password"],
+.signup-card form input[type="date"] {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 8px 0 15px 0;
+  border-radius: 12px;
+  border: none;
+  background: #2a2a3d;
+  color: white;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: 0.3s;
+}
+
+.signup-card form input:focus {
+  outline: none;
+  background: #3a3a54;
+  box-shadow: 0 0 8px #4c8bf5;
+}
+
+/* Placeholder styling */
+.signup-card form input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+/* Gender Radio Group */
+.gender-options {
+  display: flex;
+  gap: 25px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.gender-label {
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.gender-label input[type="radio"] {
+  accent-color: #4c8bf5;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Submit Button */
+.signup-card form button[type="submit"] {
+  width: 100%;
+  padding: 14px 0;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #4c8bf5, #6ea1ff);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+  margin-top: 10px;
+}
+
+.signup-card form button[type="submit"]:hover {
+  background: linear-gradient(135deg, #3a6de0, #5b8aff);
+  box-shadow: 0 0 15px #4c8bf5;
+}
+
+/* Switch Text */
+.switch-text {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: white;
+}
+
+.switch-text a {
+  color: #4c8bf5;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.switch-text a:hover {
+  text-decoration: underline;
+}
+
+

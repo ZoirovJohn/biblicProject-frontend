@@ -1,7 +1,8 @@
 // src/ResetPasswordPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
+import '../Styles/Resetpassword.css'; // Import the CSS
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState('');
@@ -19,9 +20,6 @@ export default function ResetPasswordPage() {
       }).then(() => setTokenReady(true));
     }
   }, []);
-  //as
-  console.log("aa");
-  
 
   const handleReset = async () => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -33,21 +31,29 @@ export default function ResetPasswordPage() {
     }
   };
 
-  if (!tokenReady) return <p style={{ textAlign: 'center', marginTop: '100px' }}>Validating reset link...</p>;
+  if (!tokenReady) {
+    return (
+      <div className="reset-page">
+        <div className="reset-card">
+          <p>Validating reset link...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ textAlign: 'center', paddingTop: '100px' }}>
-      <h2>Reset Your Password</h2>
-      <input
-        type="password"
-        placeholder="Enter new password"
-        value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
-        style={{ padding: '10px', width: '250px' }}
-      /><br /><br />
-      <button onClick={handleReset} style={{ padding: '10px 20px', backgroundColor: '#007BFF', color: '#fff', border: 'none' }}>Reset Password</button>
-      <p>{message}</p>
+    <div className="reset-page">
+      <div className="reset-card">
+        <h2>Reset Your Password</h2>
+        <input
+          type="password"
+          placeholder="Enter new password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
+        <button onClick={handleReset}>Reset Password</button>
+        <p>{message}</p>
+      </div>
     </div>
   );
 }
-

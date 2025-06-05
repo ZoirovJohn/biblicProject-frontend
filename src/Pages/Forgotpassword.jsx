@@ -1,8 +1,8 @@
 // src/ForgotPassword.jsx
 import React, { useState } from 'react';
-import './Loginpage.css';
+import '../Styles/Loginpage.css';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');

@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LoginPage from './Loginpage';
-import SignupPage from './Signuppage';
-import ForgotPassword from './Forgotpassword';
-import ResetPasswordPage from './Resetpasswordpage';
-import WelcomePage from './Welcomepage';
+import LoginPage from './Pages/Loginpage';
+import SignupPage from './Pages/Signuppage';
+import ForgotPassword from './Pages/Forgotpassword';
+import ResetPasswordPage from './Pages/Resetpasswordpage';
+import WelcomePage from './Pages/Welcomepage';
 
 function App() {
   return (

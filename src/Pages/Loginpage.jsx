@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import './Loginpage.css';
+import '../Styles/Loginpage.css';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -51,14 +51,14 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <div className="password-input-wrapper">
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <input
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <div className="forgot-password-container">
             <Link to="/forgot-password" className="forgot-password-link">
               Forgot your password?
             </Link>
@@ -72,3 +72,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
