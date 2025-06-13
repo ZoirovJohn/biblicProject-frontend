@@ -15,6 +15,7 @@ export default function LoginPage() {
       email,
       password,
     });
+    console.log(data);
 
     if (error) {
       const msg = error.message.toLowerCase();

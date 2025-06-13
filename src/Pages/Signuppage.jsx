@@ -14,40 +14,55 @@ export default function SignupPage() {
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match. Please check again.");
-      return;
-    }
+  if (password !== confirmPassword) {
+    alert("Passwords do not match. Please check again.");
+    return;
+  }
 
-    const { error: signupError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (signupError) {
-      alert(signupError.message);
-      return;
-    }
-
-    const { error: insertError } = await supabase.from('users').insert([
-      {
-        full_name: fullName,
-        gender: gender,
-        username: username,
-        birthdate: birthdate,
-        email: email,
+  // 1. Signup via Supabase Auth
+  const { data: authData, error: signupError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        username: username
       }
-    ]);
-
-    if (insertError) {
-      alert("Signup succeeded but failed to save user data: " + insertError.message);
-    } else {
-      alert('Signup successful! Please check your email to confirm your account.');
-      navigate('/');
     }
-  };
+  });
+
+  if (signupError) {
+    alert(signupError.message);
+    return;
+  }
+
+  const user = authData.user;
+  if (!user) {
+    alert("Signup succeeded but user object is null. Please check your email to confirm the account.");
+    return;
+  }
+
+  // 2. Insert into 'users' table
+  const { error: insertError } = await supabase.from('users').insert([
+    {
+      id: user.id, // 🧠 Связываем с auth.users по user.id
+      full_name: fullName,
+      gender: gender,
+      username: username,
+      birthdate: birthdate,
+      email: email,
+    }
+  ]);
+
+  if (insertError) {
+    alert("Signup succeeded but failed to save user data: " + insertError.message);
+    return;
+  }
+
+  alert('Signup successful! Please check your email to confirm your account.');
+  navigate('/');
+};
 
   return (
     <div className="signup-page">

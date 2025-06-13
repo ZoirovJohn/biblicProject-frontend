@@ -4,7 +4,7 @@ import LoginPage from './Pages/Loginpage';
 import SignupPage from './Pages/Signuppage';
 import ForgotPassword from './Pages/Forgotpassword';
 import ResetPasswordPage from './Pages/Resetpasswordpage';
-import WelcomePage from './Pages/Welcomepage';
+import WelcomePage from './Pages/WelcomePage';
 
 function App() {
   return (
