@@ -4,7 +4,8 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const { createPrediction } = require("../js/createPrediction");
+const { createTextPrediction } = require("../js/createTextPrediction");
+const { createImagePrediction } = require("../js/createImagePrediction")
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +19,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 console.log("FLOWISE_API_KEY from env:", process.env.FLOWISE_API_KEY)
 
 // ✅ Enhanced endpoint with file handling
-app.post("/api/chat", async (req, res) => {
+app.post("/textGeneration", async (req, res) => {
   try {
     const { message, sessionId, userId, chatHistory = [], files = [] } = req.body;
     
@@ -36,10 +37,44 @@ app.post("/api/chat", async (req, res) => {
       })));
     }
 
-    const response = await createPrediction(
+    const response = await createTextPrediction(
       message,
       sessionId,
       userId,
+      process.env.FLOWISE_API_KEY,
+      chatHistory,
+      files // Pass files to createPrediction
+    );
+
+    res.json({ success: true, response });
+   
+  } catch (error) {
+    console.error("Error in /api/chat:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/imageGeneration", async (req, res) => {
+  try {
+    const { message, sessionId, chatHistory = [], files = [] } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    console.log("Received files:", files.length);
+    if (files.length > 0) {
+      console.log("File details:", files.map(f => ({ 
+        name: f.name, 
+        type: f.type, 
+        size: f.size,
+        contentType: f.contentType 
+      })));
+    }
+
+    const response = await createImagePrediction(
+      message,
+      sessionId,
       process.env.FLOWISE_API_KEY,
       chatHistory,
       files // Pass files to createPrediction
