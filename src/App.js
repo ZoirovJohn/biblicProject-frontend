@@ -6,6 +6,7 @@ import ForgotPassword from './Pages/Forgotpassword';
 import ResetPasswordPage from './Pages/Resetpasswordpage';
 import TextGeneration from './Pages/TextGeneration';
 import ChatSelector from './Pages/ChatflowSelectionPage';
+import ImageGeneration from './Pages/ImageGeneration';
 
 function App() {
   return (
@@ -15,8 +16,9 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/textGeneration" elemetn={<TextGeneration />} />
-        <Route path="/welcome" element={<ChatSelector />} />
+        <Route path="/textGeneration" element={<TextGeneration />} />
+        <Route path="/chatFlowSelection" element={<ChatSelector />} />
+        <Route path="/imageGeneration" element={<ImageGeneration />}/>
       </Routes>
     </Router>
   );

@@ -7,8 +7,8 @@ export default function ChatSelector() {
   return (
     <div className="selector-container">
       <h2>Choose Chat Mode</h2>
-      <button onClick={() => nav('/chat/text')}>📝 Text Chat</button>
-      <button onClick={() => nav('/chat/image')}>🖼️ Image Chat</button>
+      <button onClick={() => nav('/textGeneration')}>📝 Text Chat</button>
+      <button onClick={() => nav('/imageGeneration')}>🖼️ Image Chat</button>
     </div>
   )
 }

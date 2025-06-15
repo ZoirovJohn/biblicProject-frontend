@@ -161,6 +161,114 @@
   color: #764ba2;
 }
 
+.generated-images {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.generated-image-container {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f5f5f5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.generated-image-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.generated-image {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.image-error {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  background: #f9f9f9;
+  border-radius: 12px;
+}
+
+.image-error p {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+}
+
+.image-error a {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.image-error a:hover {
+  text-decoration: underline;
+}
+
+.image-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.generated-image-container:hover .image-actions {
+  opacity: 1;
+}
+
+.image-action-button {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.image-action-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .generated-image {
+    max-width: 100%;
+  }
+  
+  .image-actions {
+    opacity: 1; /* Always show on mobile */
+  }
+}
+
+/* Dark mode support (if you have it) */
+@media (prefers-color-scheme: dark) {
+  .generated-image-container {
+    background: #2a2a2a;
+  }
+  
+  .image-error {
+    background: #333;
+    color: #ccc;
+  }
+}
+
 .card-content h3 {
   font-size: 1.5rem;
   font-weight: 600;

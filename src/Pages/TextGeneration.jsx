@@ -1,9 +1,10 @@
 import React from 'react'
 import useChatFlow from '../js/useChatFlow.js';
 import ChatWindow from './ChatWindow.jsx';
-import { callBackendPrediction } from '../js/callBackendPrediction.js'
+import { callBackendPrediction } from '../js/callBackendTextPrediction.js'
 import { useLanguage } from '../Context/LanguageContext.js';
 import { translations } from '../js/translations.js';
+import '../Styles/TextGeneration.css';
 
 export default function TextChat() {
   const { language } = useLanguage()

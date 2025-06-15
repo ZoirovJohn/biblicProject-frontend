@@ -1,4 +1,4 @@
-const createPrediction = async (message, sessionId, userId, apiKey, history = [], files = []) => {
+const createImagePrediction = async (message, sessionId, apiKey, history = [], files = []) => {
   console.log('Sending message:', message);
   console.log('Receiving apiKey:', apiKey);
   console.log('Files to process:', files.length);
@@ -50,7 +50,6 @@ const createPrediction = async (message, sessionId, userId, apiKey, history = []
       question: message,
       overrideConfig: {
         sessionId: sessionId,
-        user_id: userId,
         chatId: sessionId,
         chatMessageId: sessionId
       },
@@ -69,7 +68,7 @@ const createPrediction = async (message, sessionId, userId, apiKey, history = []
     }, null, 2));
     
     const response = await fetch(
-      `https://cloud.flowiseai.com/api/v1/prediction/359181df-9f5f-4379-99ad-619e48a567b9`,
+      `https://cloud.flowiseai.com/api/v1/prediction/394e957a-4c7f-4bd0-bc3f-e13f46df8c80`,
       {
         method: "POST",
         headers: {
@@ -127,5 +126,5 @@ const createPrediction = async (message, sessionId, userId, apiKey, history = []
 };
 
 module.exports = {
-  createPrediction,
+  createImagePrediction,
 };

@@ -1,4 +1,3 @@
-// src/hooks/useChatFlow.js
 import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../supabaseClient.js'
 import { File, Image as FileImageIcon } from 'lucide-react'
@@ -34,7 +33,7 @@ export default function useChatFlow({ language, translations, sendHandler }) {
         setMessages(data.map(m=>({
           ...m,
           timestamp: new Date(m.timestamp),
-          attachments: m.attachments ? JSON.parse(m.attachments) : []
+          attachments: m.attachments ? JSON.parse(m.attachments) : [],
         })))
       }
       setLoading(false)
@@ -104,7 +103,7 @@ export default function useChatFlow({ language, translations, sendHandler }) {
     const maxSize=10*1024*1024
     for (let att of files){
       if (att.size>maxSize) {
-        out.push({ name:att.name, type:att.type, size:att.size, content:null, contentType:'error', error:`File too large` })
+        out.push({ name:att.name, type:att.type, size:att.size, content:null, contentType:'error', error:'File too large' })
         continue
       }
       if (att.type.startsWith('text/')||att.type==='application/json'||att.type==='text/csv'){
@@ -168,19 +167,20 @@ export default function useChatFlow({ language, translations, sendHandler }) {
       content: inputMessage.trim() || (language==='ko'?'파일 첨부됨':'Files attached'),
       role: 'user',
       timestamp: new Date(),
-      attachments: attachedFiles
+      attachments: attachedFiles,
     }
     setMessages(m=>[...m, userMsg])
     setInputMessage(''); setAttachedFiles([]); setIsTyping(true)
 
     // 2) Persist user msg
     const { data:{ user } } = await supabase.auth.getUser()
-    await supabase.from('messages').insert([{
-      ...userMsg,
-      user_email: user.email,
-      timestamp: userMsg.timestamp.toISOString(),
-      attachments: JSON.stringify(userMsg.attachments)
-    }])
+    // await supabase.from('messages').insert([{
+    //   ...userMsg,
+    //   user_email: user.email,
+    //   timestamp: userMsg.timestamp.toISOString(),
+    //   attachments: JSON.stringify(userMsg.attachments),
+    //   generated_images: JSON.stringify([])
+    // }])
 
     // 3) Prepare backend call
     const fileData = attachedFiles.length
@@ -192,29 +192,73 @@ export default function useChatFlow({ language, translations, sendHandler }) {
         : `Please analyze the attached files: ${attachedFiles.map(f=>f.name).join(', ')}`
     )
 
-    // 4) Call injected handler (text vs. image)
-    const assistantContent = await sendHandler({
-      message: backendContent,
-      sessionId: user.email,
-      userId: user.email,
-      chatHistory: messages,
-      files: fileData
-    })
+    try {
+      // 4) Call injected handler
+      const assistantResponse = await sendHandler({
+        message: backendContent,
+        sessionId: user.email,
+        userId: user.email,
+        chatHistory: messages,
+        files: fileData
+      })
 
-    // 5) UI + persist assistant
-    const botMsg = {
-      id: (Date.now()+1).toString(),
-      content: assistantContent,
-      role: 'assistant',
-      timestamp: new Date(),
-      attachments: []
+      // 5) Process the response
+      let attachments = []
+      let text = ''
+
+      if (Array.isArray(assistantResponse)) {
+      // ImageChat already returned attachments[]
+      attachments = assistantResponse
+      } else if (typeof attachments === 'string') {
+      // Look for a URL in the string
+      const urlMatch = attachments.match(/https?:\/\/\S+\.(png|jpg|jpeg|gif|webp)(\?\S*)?/)
+      if (urlMatch) {
+      attachments = [{
+        id: Date.now().toString(),
+        name: 'generated.png',
+        url: urlMatch[0],
+        type: 'image/png',
+        size: null
+      }]
+      // strip URL from text if it was the only thing
+      attachments = attachments.trim() === urlMatch[0] ? '' : attachments.replace(urlMatch[0], '').trim()
+      } else {
+      attachments = attachments
     }
-    setMessages(m=>[...m, botMsg])
-    await supabase.from('messages').insert([{
-      ...botMsg, user_email: user.email,
-      timestamp: botMsg.timestamp.toISOString(),
-      attachments: JSON.stringify([])
-    }])
+  }
+
+  const botMsg = {
+    id: (Date.now()+1).toString(),
+    content: text,
+    role: 'assistant',
+    timestamp: new Date(),
+    attachments
+  }
+
+  setMessages(m => [...m, botMsg])
+  setIsTyping(false)
+      
+      // 7) Persist assistant message
+      // await supabase.from('messages').insert([{
+      //   ...botMsg, 
+      //   user_email: user.email,
+      //   timestamp: botMsg.timestamp.toISOString(),
+      //   attachments: JSON.stringify([]),
+      //   generated_images: JSON.stringify(processedResponse.generatedImages)
+      // }])
+
+    } catch (error) {
+      console.error('Error sending message:', error)
+      const errorMsg = {
+        id: (Date.now()+1).toString(),
+        content: language === 'ko' ? '오류가 발생했습니다. 다시 시도해주세요.' : 'An error occurred. Please try again.',
+        role: 'assistant',
+        timestamp: new Date(),
+        attachments: [],
+        generatedImages: []
+      }
+      setMessages(m=>[...m, errorMsg])
+    }
 
     setIsTyping(false)
   }

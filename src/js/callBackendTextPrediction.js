@@ -1,6 +1,8 @@
+//localhost:3000 - should be changed
+
 export const callBackendPrediction = async (message, sessionId, userId, chatHistory = [], files = []) => {
   try {
-    const response = await fetch("http://localhost:3000/api/chat", {
+    const response = await fetch("http://localhost:3000/textGeneration", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
