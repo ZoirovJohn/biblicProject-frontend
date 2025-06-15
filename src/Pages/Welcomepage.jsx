@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Copy, Check, MessageSquare, Sparkles, Paperclip, Mic, MicOff, X, File, Image, Globe } from 'lucide-react';
-import { supabase } from '../supabaseClient'
-import { callBackendPrediction } from '../js/callBackendPrediction';
+import { supabase } from '../supabaseClient.js'
+import { callBackendPrediction } from '../js/callBackendPrediction.js';
 import { useLanguage } from '../Context/LanguageContext.js';
 import '../Styles/WelcomePage.css';
 
