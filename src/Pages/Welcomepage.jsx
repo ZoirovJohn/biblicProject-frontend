@@ -159,6 +159,109 @@ export default function WelcomePage() {
     };
   }, [language, t]); // Re-initialize when language changes
 
+  // Helper function to convert file to base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Helper function to process files for backend
+const processFilesForBackend = async (files) => {
+  const processedFiles = [];
+  const maxFileSize = 10 * 1024 * 1024; // 10MB limit
+  
+  for (const attachment of files) {
+    try {
+      // Check file size
+      if (attachment.size > maxFileSize) {
+        console.warn(`File ${attachment.name} is too large (${attachment.size} bytes). Skipping.`);
+        processedFiles.push({
+          name: attachment.name,
+          type: attachment.type,
+          size: attachment.size,
+          content: null,
+          contentType: 'error',
+          error: `File too large (max ${maxFileSize / 1024 / 1024}MB)`
+        });
+        continue;
+      }
+
+      // Process different file types
+      if (attachment.type.startsWith('text/') || 
+          attachment.type === 'application/json' ||
+          attachment.type === 'text/csv' ||
+          attachment.type === 'text/plain') {
+        
+        // For text files, read as text
+        const text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsText(attachment.file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+        
+        processedFiles.push({
+          name: attachment.name,
+          type: attachment.type,
+          size: attachment.size,
+          content: text,
+          contentType: 'text'
+        });
+        
+      } else if (attachment.type.startsWith('image/') || 
+                 attachment.type === 'application/pdf' ||
+                 attachment.type.startsWith('audio/') ||
+                 attachment.type.startsWith('video/')) {
+        
+        // For binary files, convert to base64
+        const base64 = await fileToBase64(attachment.file);
+        
+        processedFiles.push({
+          name: attachment.name,
+          type: attachment.type,
+          size: attachment.size,
+          content: base64,
+          contentType: 'base64'
+        });
+        
+      } else {
+        // For unknown file types, try base64
+        console.log(`Unknown file type ${attachment.type}, trying base64 conversion`);
+        const base64 = await fileToBase64(attachment.file);
+        
+        processedFiles.push({
+          name: attachment.name,
+          type: attachment.type,
+          size: attachment.size,
+          content: base64,
+          contentType: 'base64'
+        });
+      }
+      
+      console.log(`Successfully processed: ${attachment.name}`);
+      
+    } catch (error) {
+      console.error('Error processing file:', attachment.name, error);
+      processedFiles.push({
+        name: attachment.name,
+        type: attachment.type,
+        size: attachment.size,
+        content: null,
+        contentType: 'error',
+        error: error.message
+      });
+    }
+  }
+  
+  console.log(`Processed ${processedFiles.length} files for backend`);
+  return processedFiles;
+};
+
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -176,10 +279,38 @@ export default function WelcomePage() {
     const userAttachments = [...attachedFiles];
     const messageId = Date.now().toString();
 
-    // Create the user message object
+    // Prepare message content for backend - handle file-only messages
+    let messageForBackend = userInput.trim();
+    
+    // If no text but files are attached, create a descriptive message
+    if (!messageForBackend && userAttachments.length > 0) {
+      const fileDescriptions = userAttachments.map(file => {
+        if (file.type.startsWith('image/')) {
+          return `[Image: ${file.name}]`;
+        } else if (file.type.startsWith('audio/')) {
+          return `[Audio: ${file.name}]`;
+        } else if (file.type === 'application/pdf') {
+          return `[PDF: ${file.name}]`;
+        } else if (file.type.includes('text')) {
+          return `[Text file: ${file.name}]`;
+        } else {
+          return `[File: ${file.name}]`;
+        }
+      }).join(' ');
+      
+      messageForBackend = language === 'ko' 
+        ? `첨부된 파일을 분석해주세요: ${fileDescriptions}`
+        : `Please analyze the attached files: ${fileDescriptions}`;
+    }
+
+    // Create the user message object for UI (show original input or file description)
+    const displayContent = userInput || (userAttachments.length > 0 
+      ? (language === 'ko' ? '파일 첨부됨' : 'Files attached') 
+      : '');
+
     const newMessage = {
       id: messageId,
-      content: userInput,
+      content: displayContent,
       role: 'user',
       timestamp: new Date(),
       attachments: userAttachments
@@ -220,11 +351,24 @@ export default function WelcomePage() {
         console.error('Error saving user message:', userInsertError);
       }
 
+      // Process files for backend if any exist
+      let processedFiles = [];
+      if (userAttachments.length > 0) {
+        try {
+          processedFiles = await processFilesForBackend(userAttachments);
+          console.log('Processed files for backend:', processedFiles.length);
+        } catch (error) {
+          console.error('Error processing files:', error);
+        }
+      }
+
+      // Send the prepared message and files to backend
       const response = await callBackendPrediction(
-        userInput,
-        profile.username,
-        profile.username,
-        messages // if you want to pass full chat history
+        messageForBackend, // message
+        user.email, // sessionId (using email as session identifier)
+        profile.username, // userId  
+        messages, // chatHistory
+        processedFiles // files (processed file attachments)
       );
 
       let assistantContent = typeof response === 'string'
@@ -297,16 +441,111 @@ export default function WelcomePage() {
   };
 
   const handleFileAttachment = (e) => {
-    const files = Array.from(e.target.files);
-    const newAttachments = files.map(file => ({
-      id: Date.now() + Math.random(),
-      file,
-      name: file.name,
-      size: file.size,
-      type: file.type
-    }));
-    setAttachedFiles(prev => [...prev, ...newAttachments]);
+  const files = Array.from(e.target.files);
+  const maxFiles = 5; // Limit number of files
+  
+  // Comprehensive list of allowed file types
+  const allowedTypes = [
+    // Text files
+    'text/plain', 'text/csv', 'text/html', 'text/css', 'text/javascript',
+    'application/json', 'application/xml', 'text/xml',
+    
+    // Images
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 
+    'image/bmp', 'image/svg+xml', 'image/tiff',
+    
+    // Documents
+    'application/pdf',
+    
+    // Microsoft Office
+    'application/vnd.ms-powerpoint', // .ppt
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+    'application/vnd.ms-excel', // .xls
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/msword', // .doc
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    
+    // OpenOffice/LibreOffice
+    'application/vnd.oasis.opendocument.text', // .odt
+    'application/vnd.oasis.opendocument.spreadsheet', // .ods
+    'application/vnd.oasis.opendocument.presentation', // .odp
+    
+    // Audio
+    'audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a',
+    'audio/aac', 'audio/flac', 'audio/wma',
+    
+    // Video
+    'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo',
+    'video/webm', 'video/ogg', 'video/3gpp',
+    
+    // Archives
+    'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed',
+    
+    // Code files
+    'application/javascript', 'text/x-python', 'application/x-python-code',
+    'text/x-java-source', 'text/x-c', 'text/x-c++src'
+  ];
+  
+  // Function to check if file type is allowed
+  const isFileTypeAllowed = (fileType, fileName) => {
+    // Check explicit allowed types
+    if (allowedTypes.includes(fileType)) {
+      return true;
+    }
+    
+    // Check for text/* pattern (covers many text file variations)
+    if (fileType.startsWith('text/')) {
+      return true;
+    }
+    
+    // Check by file extension as fallback
+    const extension = fileName.toLowerCase().split('.').pop();
+    const allowedExtensions = [
+      'txt', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py', 'java', 'c', 'cpp',
+      'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'tiff',
+      'pdf', 'ppt', 'pptx', 'xls', 'xlsx', 'doc', 'docx',
+      'odt', 'ods', 'odp',
+      'mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac',
+      'mp4', 'avi', 'mov', 'wmv', 'webm',
+      'zip', 'rar', '7z'
+    ];
+    
+    return allowedExtensions.includes(extension);
   };
+  
+  // Filter and validate files
+  const validFiles = files.filter(file => {
+    if (attachedFiles.length >= maxFiles) {
+      alert(`Maximum ${maxFiles} files allowed`);
+      return false;
+    }
+    
+    if (!isFileTypeAllowed(file.type, file.name)) {
+      alert(`File type "${file.type}" not supported for ${file.name}. Please try a different file format.`);
+      return false;
+    }
+    
+    if (file.size > 25 * 1024 * 1024) { // Increased to 25MB for documents
+      alert(`File ${file.name} is too large (max 25MB)`);
+      return false;
+    }
+    
+    return true;
+  });
+  
+  const newAttachments = validFiles.map(file => ({
+    id: Date.now() + Math.random(),
+    file,
+    name: file.name,
+    size: file.size,
+    type: file.type
+  }));
+  
+  setAttachedFiles(prev => [...prev, ...newAttachments]);
+  
+  // Clear the input so the same file can be selected again
+  e.target.value = '';
+};;
 
   const removeAttachment = (id) => {
     setAttachedFiles(prev => prev.filter(file => file.id !== id));

@@ -1,4 +1,4 @@
-export const callBackendPrediction = async (message, sessionId, userId, chatHistory = []) => {
+export const callBackendPrediction = async (message, sessionId, userId, chatHistory = [], files = []) => {
   try {
     const response = await fetch("http://localhost:3000/api/chat", {
       method: "POST",
@@ -9,7 +9,8 @@ export const callBackendPrediction = async (message, sessionId, userId, chatHist
         message,
         sessionId,
         userId,
-        chatHistory
+        chatHistory,
+        files: files.length > 0 ? files : undefined // Only include files if there are any
       })
     });
 
@@ -20,7 +21,7 @@ export const callBackendPrediction = async (message, sessionId, userId, chatHist
 
     const result = await response.json();
     return result.response;
-
+    
   } catch (err) {
     console.error("Backend call failed:", err);
     throw err;
