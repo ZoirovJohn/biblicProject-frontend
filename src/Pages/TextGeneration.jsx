@@ -9,6 +9,7 @@ import '../Styles/TextGeneration.css';
 export default function TextChat() {
   const { language } = useLanguage()
   const flow = useChatFlow({
+    table: "messages",
     language,
     translations,
     sendHandler: async ({ message, sessionId, userId, chatHistory, files }) => {
@@ -19,9 +20,11 @@ export default function TextChat() {
   })
   return (
     <ChatWindow
+      mode="text"
+      title={language==='ko'?'일반 채팅':'Text Chat'}
+      subtitle={language==='ko'?'메시지를 입력하세요':'Type your question...'}
+      inputPlaceholder={language==='ko'?'질문을 입력하세요…':'Type your question…'}
       {...flow}
-      title={translations[language].title}
-      subtitle={translations[language].subtitle}
     />
   )
 }

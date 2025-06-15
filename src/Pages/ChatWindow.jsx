@@ -121,6 +121,10 @@ const GeneratedImages = ({ images, t }) => {
 }
 
 export default function ChatWindow({
+  mode,
+  title,
+  subtitle,
+  placeholderText,
   messages,
   loadingMessages,
   inputMessage,
@@ -143,6 +147,7 @@ export default function ChatWindow({
 }) {
   const { language } = useLanguage()
   const t = translations[language]
+  const placeHolder = placeholderText ?? t.placeholder
 
   return (
     <div className="chat-container">
@@ -151,8 +156,8 @@ export default function ChatWindow({
         <div className="header-info">
           <div className="ai-avatar"><MessageSquare size={20}/></div>
           <div className="header-text">
-            <h1>{t.title}</h1>
-            <p>{t.subtitle}</p>
+            <h1>{title}</h1>
+            <p>{subtitle}</p>
           </div>
         </div>
       </header>
@@ -251,14 +256,14 @@ export default function ChatWindow({
         )}
 
         <div className="modern-input-wrapper">
-          <button onClick={()=>fileInputRef.current.click()} title={t.attachFile}><Paperclip size={18}/></button>
+          <button onClick={()=>fileInputRef.current.click()} title={t.attachFile} className='attachment-button'><Paperclip size={18}/></button>
           <input ref={fileInputRef} type="file" multiple onChange={handleFileAttachment} style={{display:'none'}} accept="*/*"/>
 
           <input
             value={inputMessage}
-            onChange={e=>setInputMessage(e.target.value)}
+            onChange={e => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={t.placeholder}
+            placeholder={placeHolder}
             className="modern-input"
           />
 

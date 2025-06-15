@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../supabaseClient.js'
 import { File, Image as FileImageIcon } from 'lucide-react'
 
-export default function useChatFlow({ language, translations, sendHandler }) {
+export default function useChatFlow({ language, translations, sendHandler, table }) {
   const t = translations[language]
 
   // ── STATE & REFS ────────────────────────────────────────────
@@ -23,7 +23,7 @@ export default function useChatFlow({ language, translations, sendHandler }) {
     const fetch = async () => {
       const { data:{ user } } = await supabase.auth.getUser()
       const { data, error } = await supabase
-        .from('messages').select('*')
+        .from(table).select('*')
         .eq('user_email', user.email)
         .order('timestamp', { ascending: true })
 
@@ -174,13 +174,14 @@ export default function useChatFlow({ language, translations, sendHandler }) {
 
     // 2) Persist user msg
     const { data:{ user } } = await supabase.auth.getUser()
-    // await supabase.from('messages').insert([{
-    //   ...userMsg,
-    //   user_email: user.email,
-    //   timestamp: userMsg.timestamp.toISOString(),
-    //   attachments: JSON.stringify(userMsg.attachments),
-    //   generated_images: JSON.stringify([])
-    // }])
+    await supabase.from(table).insert([{
+      id:userMsg.id,
+      content: userMsg.content,
+      role:userMsg.role,
+      user_email: user.email,
+      timestamp: userMsg.timestamp.toISOString(),
+      attachments: JSON.stringify(userMsg.attachments),
+    }])
 
     // 3) Prepare backend call
     const fileData = attachedFiles.length
@@ -239,13 +240,14 @@ export default function useChatFlow({ language, translations, sendHandler }) {
   setIsTyping(false)
       
       // 7) Persist assistant message
-      // await supabase.from('messages').insert([{
-      //   ...botMsg, 
-      //   user_email: user.email,
-      //   timestamp: botMsg.timestamp.toISOString(),
-      //   attachments: JSON.stringify([]),
-      //   generated_images: JSON.stringify(processedResponse.generatedImages)
-      // }])
+      await supabase.from(table).insert([{
+        id: botMsg.id,
+        content: botMsg.content,
+        role: botMsg.role, 
+        user_email: user.email,
+        timestamp: botMsg.timestamp.toISOString(),
+        attachments: JSON.stringify(botMsg.attachments),
+      }])
 
     } catch (error) {
       console.error('Error sending message:', error)

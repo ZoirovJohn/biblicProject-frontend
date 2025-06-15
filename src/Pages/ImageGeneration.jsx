@@ -9,6 +9,7 @@ import { callBackendPrediction } from '../js/callBackendImagePrediction.js';
 export default function ImageChat() {
   const { language } = useLanguage()
   const flow = useChatFlow({
+    table: "imageGeneration messages",
     language,
     translations,
     sendHandler: async ({ message, sessionId, chatHistory, files }) => {
@@ -37,9 +38,11 @@ export default function ImageChat() {
   })
   return (
     <ChatWindow
-      {...flow}
-      title={language==='ko'?'이미지 생성':'Image Generator'}
-      subtitle={language==='ko'?'장면을 묘사하세요':'Describe what you want'}
+    {...flow}
+      mode="image"
+      title={language==='ko'?'이미지 생성 전용':'Image Generator Only'}
+      subtitle={language==='ko'?'아래에 이미지 설명을 입력하세요':'Enter a description below to generate an image'}
+      placeholderText={language==='ko'?'예: 고양이가 우주를 나는 모습…':'Generate an image of…'}
     />
   )
 }
