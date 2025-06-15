@@ -1,61 +1,163 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Copy, Check, MessageSquare, Sparkles, Paperclip, Mic, MicOff, X, File, Image } from 'lucide-react';
+import { Send, Copy, Check, MessageSquare, Sparkles, Paperclip, Mic, MicOff, X, File, Image, Globe } from 'lucide-react';
 import { supabase } from '../supabaseClient'
-import { createPrediction } from '../js/createPrediction';
+import { callBackendPrediction } from '../js/callBackendPrediction';
+import { useLanguage } from '../Context/LanguageContext.js';
 import '../Styles/WelcomePage.css';
 
+// Translations object
+const translations = {
+  en: {
+    title: "BIBLIC chatbot",
+    subtitle: "Always here to help",
+    defaultMessage: "Hello! I'm your AI assistant. How can I help you today?",
+    placeholder: "Type your question...",
+    attachFile: "Attach file",
+    holdToRecord: "Hold to record voice message",
+    releaseToStop: "Release to stop recording",
+    clickToRecord: "Click to start speech recognition",
+    listening: "Listening... Click to stop",
+    copyMessage: "Copy message",
+    microphoneError: "Could not access microphone. Please check permissions.",
+    speechNotSupported: "Speech recognition is not supported in this browser.",
+    speechError: "Speech recognition error. Please try again.",
+    errorPrefix: "⚠️ Error: ",
+    voiceMessagePrefix: "voice-message-",
+    fileSizes: {
+      bytes: "Bytes",
+      kb: "KB", 
+      mb: "MB",
+      gb: "GB"
+    }
+  },
+  ko: {
+    title: "BIBLIC 챗봇",
+    subtitle: "언제나 도움을 드립니다",
+    defaultMessage: "안녕하세요! 저는 AI 어시스턴트입니다. 오늘 어떻게 도와드릴까요?",
+    placeholder: "질문을 입력하세요...",
+    attachFile: "파일 첨부",
+    holdToRecord: "음성 메시지를 녹음하려면 누르고 계세요",
+    releaseToStop: "녹음을 중지하려면 놓으세요",
+    clickToRecord: "음성 인식을 시작하려면 클릭하세요",
+    listening: "듣고 있습니다... 중지하려면 클릭하세요",
+    copyMessage: "메시지 복사",
+    microphoneError: "마이크에 접근할 수 없습니다. 권한을 확인해주세요.",
+    speechNotSupported: "이 브라우저에서는 음성 인식이 지원되지 않습니다.",
+    speechError: "음성 인식 오류가 발생했습니다. 다시 시도해주세요.",
+    errorPrefix: "⚠️ 오류: ",
+    voiceMessagePrefix: "음성-메시지-",
+    fileSizes: {
+      bytes: "바이트",
+      kb: "KB",
+      mb: "MB", 
+      gb: "GB"
+    }
+  }
+};
+
 export default function WelcomePage() {
+  const { language, toggleLanguage } = useLanguage();
+  const t = translations[language];
+
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
 
   useEffect(() => {
-  const fetchMessages = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('user_email', user.email)
-      .order('timestamp', { ascending: true });
+    const fetchMessages = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('user_email', user.email)
+        .order('timestamp', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching messages:', error);
-      setMessages([{
-        id: '1',
-        content: "Hello! I'm your AI assistant. How can I help you today?",
-        role: 'assistant',
-        timestamp: new Date()
-      }]);
-    } else if (data.length === 0) {
-      setMessages([{
-        id: '1',
-        content: "Hello! I'm your AI assistant. How can I help you today?",
-        role: 'assistant',
-        timestamp: new Date()
-      }]);
-    } else {
-      const restoredMessages = data.map(msg => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp),
-        attachments: msg.attachments ? JSON.parse(msg.attachments) : []
-      }));
-      setMessages(restoredMessages);
-    }
+      if (error) {
+        console.error('Error fetching messages:', error);
+        setMessages([{
+          id: '1',
+          content: t.defaultMessage,
+          role: 'assistant',
+          timestamp: new Date()
+        }]);
+      } else if (data.length === 0) {
+        setMessages([{
+          id: '1',
+          content: t.defaultMessage,
+          role: 'assistant',
+          timestamp: new Date()
+        }]);
+      } else {
+        const restoredMessages = data.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+          attachments: msg.attachments ? JSON.parse(msg.attachments) : []
+        }));
+        setMessages(restoredMessages);
+      }
 
-    setLoadingMessages(false);
-  };
+      setLoadingMessages(false);
+    };
 
-  fetchMessages();
-}, []);
+    fetchMessages();
+  }, [language]);
 
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
+  const recognitionRef = useRef(null);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      // Set language based on current language setting
+      recognition.lang = language === 'ko' ? 'ko-KR' : 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInputMessage(prev => prev + (prev ? ' ' : '') + transcript);
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        
+        // Show user-friendly error message
+        if (event.error === 'not-allowed') {
+          alert(t.microphoneError);
+        } else {
+          alert(t.speechError);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, [language, t]); // Re-initialize when language changes
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -66,110 +168,123 @@ export default function WelcomePage() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { data: profile, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', user.email)
-      .single();
-
-
+    // Early return if no content
     if (!inputMessage.trim() && attachedFiles.length === 0) return;
 
-    console.log('Sending message:', inputMessage);
+    // Store values BEFORE any async operations
+    const userInput = inputMessage;
+    const userAttachments = [...attachedFiles];
+    const messageId = Date.now().toString();
 
-    const userMessage = {
-      id: Date.now().toString(),
-      content: inputMessage,
+    // Create the user message object
+    const newMessage = {
+      id: messageId,
+      content: userInput,
       role: 'user',
       timestamp: new Date(),
-      attachments: attachedFiles
+      attachments: userAttachments
     };
 
-    // Add user message to the chat
-    setMessages(prev => [...prev, userMessage]);
-    const { error: insertError } = await supabase.from('messages').insert([{
-      id: userMessage.id,
-      user_email: user.email,
-      content: userMessage.content,
-      role: userMessage.role,
-      timestamp: userMessage.timestamp.toISOString(),
-      attachments: JSON.stringify(userMessage.attachments || [])
-    }]);
-
-    if (insertError) {
-      console.error('Supabase insert error:', insertError);
-    }
-    
-    // Store the input before clearing it
-    const currentInput = inputMessage;
+    // 🚀 IMMEDIATE UI UPDATES - No async operations before this!
     setInputMessage('');
     setAttachedFiles([]);
+    setMessages(prev => [...prev, newMessage]);
     setIsTyping(true);
 
-    try {
-      console.log('Calling createPrediction with:', currentInput);
-      const response = await createPrediction(currentInput, profile.username, profile.username);
-      console.log(user.email)
-      console.log('Received response:', response);
+    // Declare user variable in outer scope
+    let user = null;
 
-      // Extract the content from Flowise response
-      let assistantContent;
+    // Now handle all async operations after UI is updated
+    try {
+      // Get user data (async)
+      const { data: userData } = await supabase.auth.getUser();
+      user = userData.user; // Store in outer scope
       
-      if (typeof response === 'string') {
-        assistantContent = response;
-      } else if (response.text) {
-        assistantContent = response.text;
-      } else if (response.answer) {
-        assistantContent = response.answer;
-      } else if (response.message) {
-        assistantContent = response.message;
-      } else if (response.result) {
-        assistantContent = response.result;
-      } else if (response.data) {
-        assistantContent = response.data;
-      } else {
-        // For Flowise, the response might be directly the text content
-        assistantContent = JSON.stringify(response);
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', user.email)
+        .single();
+
+      // Save user message to database with error handling
+      const { error: userInsertError } = await supabase.from('messages').insert([{
+        id: messageId,
+        user_email: user.email,
+        content: newMessage.content,
+        role: newMessage.role,
+        timestamp: newMessage.timestamp.toISOString(),
+        attachments: JSON.stringify(newMessage.attachments || [])
+      }]);
+
+      if (userInsertError) {
+        console.error('Error saving user message:', userInsertError);
       }
 
-      console.log('Extracted content:', assistantContent);
+      const response = await callBackendPrediction(
+        userInput,
+        profile.username,
+        profile.username,
+        messages // if you want to pass full chat history
+      );
 
-      // Create assistant message
-      const assistantMessage = {
+      let assistantContent = typeof response === 'string'
+        ? response
+        : response.text || response.answer || response.message || response.result || response.data || JSON.stringify(response);
+
+      const botMessage = {
         id: (Date.now() + 1).toString(),
         content: assistantContent,
         role: 'assistant',
         timestamp: new Date()
       };
 
-      await supabase.from('messages').insert([{
-        id: assistantMessage.id,
+      // Add bot message to UI
+      setMessages(prev => [...prev, botMessage]);
+
+      // Save bot message to database with proper error handling
+      const { error: botInsertError } = await supabase.from('messages').insert([{
+        id: botMessage.id,
         user_email: user.email,
-        content: assistantMessage.content,
-        role: assistantMessage.role,
-        timestamp: assistantMessage.timestamp.toISOString(),
-        attachments: JSON.stringify(assistantMessage.attachments || [])
+        content: botMessage.content,
+        role: botMessage.role,
+        timestamp: botMessage.timestamp.toISOString(),
+        attachments: JSON.stringify([])
       }]);
 
-      // Add assistant message to the chat
-      setMessages(prev => [...prev, assistantMessage]);
+      if (botInsertError) {
+        console.error('Error saving assistant message:', botInsertError);
+        // Optionally show user an error message
+        console.warn('Assistant message was not saved to database, but conversation continues normally');
+      } else {
+        console.log('Assistant message saved successfully');
+      }
 
-    } catch (error) {
-      console.error('Error getting AI response:', error);
-      
-      // Add detailed error message to chat for debugging
+    } catch (err) {
+      console.error('Error in handleSendMessage:', err);
       const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        content: `Error: ${error.message}. Please check the console for more details and verify your API configuration.`,
+        id: (Date.now() + 2).toString(),
+        content: `${t.errorPrefix}${err.message}`,
         role: 'assistant',
         timestamp: new Date()
       };
-      
       setMessages(prev => [...prev, errorMessage]);
+
+      // Try to save error message if user is available
+      if (user) {
+        try {
+          await supabase.from('messages').insert([{
+            id: errorMessage.id,
+            user_email: user.email,
+            content: errorMessage.content,
+            role: errorMessage.role,
+            timestamp: errorMessage.timestamp.toISOString(),
+            attachments: JSON.stringify([])
+          }]);
+        } catch (insertError) {
+          console.error('Error saving error message:', insertError);
+        }
+      }
     } finally {
-      // Always stop typing indicator
       setIsTyping(false);
     }
   };
@@ -197,41 +312,23 @@ export default function WelcomePage() {
     setAttachedFiles(prev => prev.filter(file => file.id !== id));
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      
-      const chunks = [];
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-      
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
-        const audioFile = {
-          id: Date.now(),
-          file: blob,
-          name: `voice-message-${Date.now()}.wav`,
-          size: blob.size,
-          type: 'audio/wav',
-          isVoice: true
-        };
-        setAttachedFiles(prev => [...prev, audioFile]);
-        stream.getTracks().forEach(track => track.stop());
-      };
-      
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      alert('Could not access microphone. Please check permissions.');
+  const toggleSpeechRecognition = () => {
+    if (!recognitionRef.current) {
+      alert(t.speechNotSupported);
+      return;
     }
-  };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      try {
+        // Update language setting before starting
+        recognitionRef.current.lang = language === 'ko' ? 'ko-KR' : 'en-US';
+        recognitionRef.current.start();
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+        alert(t.speechError);
+      }
     }
   };
 
@@ -246,17 +343,18 @@ export default function WelcomePage() {
   };
 
   const formatTime = (date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    const locale = language === 'ko' ? 'ko-KR' : 'en-US';
+    return new Intl.DateTimeFormat(locale, {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
+      hour12: language === 'en'
     }).format(date);
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return `0 ${t.fileSizes.bytes}`;
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = [t.fileSizes.bytes, t.fileSizes.kb, t.fileSizes.mb, t.fileSizes.gb];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
@@ -278,12 +376,9 @@ export default function WelcomePage() {
             <div className="status-indicator"></div>
           </div>
           <div className="header-text">
-            <h1>BIBLIC chatbot</h1>
-            <p>Always here to help</p>
+            <h1>{t.title}</h1>
+            <p>{t.subtitle}</p>
           </div>
-        </div>
-        <div className="message-count">
-          {messages.length - 1} messages
         </div>
       </header>
 
@@ -328,7 +423,7 @@ export default function WelcomePage() {
                 <button
                   onClick={() => copyMessage(message.id, message.content)}
                   className="copy-button"
-                  title="Copy message"
+                  title={t.copyMessage}
                 >
                   {copiedMessageId === message.id ? (
                     <Check size={12} />
@@ -389,7 +484,7 @@ export default function WelcomePage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             className="attachment-button"
-            title="Attach file"
+            title={t.attachFile}
           >
             <Paperclip size={18} />
           </button>
@@ -400,19 +495,17 @@ export default function WelcomePage() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type your question..."
+              placeholder={t.placeholder}
               className="modern-input"
             />
           </div>
 
           <button
-            onMouseDown={startRecording}
-            onMouseUp={stopRecording}
-            onMouseLeave={stopRecording}
-            className={`voice-button ${isRecording ? 'recording' : ''}`}
-            title={isRecording ? "Release to stop recording" : "Hold to record voice message"}
+            onClick={toggleSpeechRecognition}
+            className={`voice-button ${isListening ? 'listening' : ''}`}
+            title={isListening ? t.listening : t.clickToRecord}
           >
-            {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+            {isListening ? <MicOff size={18} /> : <Mic size={18} />}
           </button>
 
           <button

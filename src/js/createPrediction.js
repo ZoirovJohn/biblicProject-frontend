@@ -1,6 +1,6 @@
-export const createPrediction = async (message, sessionId, userId) => {
+const createPrediction = async (message, sessionId, userId, apiKey, history = []) => {
   console.log('Sending message:', message);
-
+  console.log('receiving apiKey', apiKey)
   try {
     const flowiseData = {
       question: message,
@@ -9,16 +9,17 @@ export const createPrediction = async (message, sessionId, userId) => {
         user_id: userId,
         chatId: sessionId,
         chatMessageId: sessionId
-      }
+      },
+      history: history,
     };
     
     const response = await fetch(
-      `https://cloud.flowiseai.com/api/v1/prediction/1aedc063-d050-4e6a-8a56-fb0aeb31e35b`,
+      `https://cloud.flowiseai.com/api/v1/prediction/359181df-9f5f-4379-99ad-619e48a567b9`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.REACT_APP_FLOWISE_API_KEY}`
+          "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify(flowiseData)
       }
@@ -52,4 +53,8 @@ export const createPrediction = async (message, sessionId, userId) => {
     console.error('Error in createPrediction:', error);
     throw error; // Re-throw so the calling function can handle it
   }
+};
+
+module.exports = {
+  createPrediction,
 };

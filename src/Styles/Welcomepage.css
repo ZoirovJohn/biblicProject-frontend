@@ -51,7 +51,6 @@ body {
 .chat-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-glass);
@@ -100,11 +99,6 @@ body {
 
 .header-text p {
   margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.message-count {
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
