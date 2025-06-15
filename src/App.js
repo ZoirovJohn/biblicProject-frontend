@@ -4,7 +4,8 @@ import LoginPage from './Pages/Loginpage';
 import SignupPage from './Pages/Signuppage';
 import ForgotPassword from './Pages/Forgotpassword';
 import ResetPasswordPage from './Pages/Resetpasswordpage';
-import WelcomePage from './Pages/WelcomePage';
+import TextGeneration from './Pages/TextGeneration';
+import ChatSelector from './Pages/ChatflowSelectionPage';
 
 function App() {
   return (
@@ -14,7 +15,8 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/welcome" element={<WelcomePage />} />
+        <Route path="/textGeneration" elemetn={<TextGeneration />} />
+        <Route path="/welcome" element={<ChatSelector />} />
       </Routes>
     </Router>
   );

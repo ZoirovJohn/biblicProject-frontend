@@ -56,7 +56,7 @@ export default function LoginPage() {
         alert(error.message);
       }
     } else if (data?.user) {
-      navigate('/welcome');
+      navigate('/chatFlowSelection');
     } else {
       alert('Login failed: No user returned');
     }
