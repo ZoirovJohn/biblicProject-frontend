@@ -216,8 +216,10 @@ export default function ChatWindow({
 
                 {/* Actions */}
                 <div className={`message-actions ${m.role}`}>
-                  <button onClick={()=>copyMessage(m.id,m.content)} title={t.copyMessage}>
-                    {copiedMessageId===m.id ? <Check size={12}/> : <Copy size={12}/>}
+                  <button onClick={() => copyMessage(m.id, m.content, m.attachments, m.generatedImages)} title={t.copyMessage}>
+                    {copiedMessageId === m.id
+                      ? <Check size={12}/>
+                      : <Copy size={12}/>}
                   </button>
                 </div>
 

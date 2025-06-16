@@ -23,7 +23,6 @@ export default function LoginPage() {
     },
     ko: {
       welcome: '\uc5ec\uc11c\uc624\uc138\uc694!',
-      // bot: '\ubcf4\ud2b8!',
       emailPlaceholder: '\uc774\uba54\uc77c \uc785\ub825',
       passwordPlaceholder: '\ube44\ubc00\ubc88\ud638 \uc785\ub825',
       signIn: '\ub85c\uadf8\uc778',

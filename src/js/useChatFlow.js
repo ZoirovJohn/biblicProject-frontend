@@ -145,12 +145,34 @@ export default function useChatFlow({ language, translations, sendHandler, table
       recognitionRef.current.start()
     }
   }
-
-  const copyMessage = async (id, content) => {
-    await navigator.clipboard.writeText(content)
-    setCopiedMessageId(id)
-    setTimeout(()=>setCopiedMessageId(null),2000)
-  }
+  
+    const copyMessage = async (
+    id,
+    content,
+    attachments = [],
+    generatedImages = []
+    ) => {
+      try {
+        // prefer an image from generatedImages, else from attachments
+        const imgs = generatedImages.length ? generatedImages : attachments
+        if (imgs.length && imgs[0].url) {
+          const res = await fetch(imgs[0].url)
+          const blob = await res.blob()
+          await navigator.clipboard.write([
+            new ClipboardItem({ [blob.type]: blob })
+          ])
+        } else {
+          // no image → copy plain text
+          await navigator.clipboard.writeText(content)
+        }
+      
+        setCopiedMessageId(id)
+        setTimeout(() => setCopiedMessageId(null), 2000)
+      } catch (err) {
+        console.error('Copy failed:', err)
+      }
+    }
+      
 
   const handleKeyPress = e => {
     if (e.key==='Enter' && !e.shiftKey) {

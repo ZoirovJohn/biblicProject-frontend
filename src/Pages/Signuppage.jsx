@@ -191,9 +191,9 @@ export default function SignupPage() {
         <p className="switch-text">
           {t.alreadyHave} <a href="/">{t.login}</a>
         </p>
-        <button onClick={toggleLanguage} className="lang-toggle">
+        {/* <button onClick={toggleLanguage} className="lang-toggle">
           {language === 'en' ? '한국어' : 'English'}
-        </button>
+        </button> */}
       </div>
     </div>
   );
