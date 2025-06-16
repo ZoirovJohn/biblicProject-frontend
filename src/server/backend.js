@@ -22,7 +22,7 @@ console.log("FLOWISE_API_KEY from env:", process.env.FLOWISE_API_KEY)
 app.post("/textGeneration", async (req, res) => {
   try {
     const { message, sessionId, userId, chatHistory = [], files = [] } = req.body;
-    
+    console.log('received user id:' + userId)
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }

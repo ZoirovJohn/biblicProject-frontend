@@ -2,6 +2,7 @@
 
 export const callBackendPrediction = async (message, sessionId, userId, chatHistory = [], files = []) => {
   try {
+    console.log(userId)
     const response = await fetch("http://localhost:3000/textGeneration", {
       method: "POST",
       headers: {

@@ -1,6 +1,4 @@
-const createPrediction = async (message, sessionId, userId, apiKey, history = []) => {
-  console.log('Sending message:', message);
-  console.log('receiving apiKey', apiKey)
+const createTextPrediction = async (message, sessionId, userId, apiKey, history = []) => {
   try {
     const flowiseData = {
       question: message,
@@ -56,5 +54,5 @@ const createPrediction = async (message, sessionId, userId, apiKey, history = []
 };
 
 module.exports = {
-  createPrediction,
+  createTextPrediction,
 };

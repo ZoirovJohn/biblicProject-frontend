@@ -226,17 +226,17 @@ export default function useChatFlow({ language, translations, sendHandler, table
       })
 
       // 5) Process the response
-      let attachments = []
-      let text = ''
+      let messageAttachments = []
+      let messageText = ''
 
-      if (Array.isArray(assistantResponse)) {
-      // ImageChat already returned attachments[]
-      attachments = assistantResponse
-      } else if (typeof attachments === 'string') {
-      // Look for a URL in the string
-      const urlMatch = attachments.match(/https?:\/\/\S+\.(png|jpg|jpeg|gif|webp)(\?\S*)?/)
-      if (urlMatch) {
-      attachments = [{
+  if (Array.isArray(assistantResponse)) {
+    // ImageChat already returned attachments[]
+    messageAttachments = assistantResponse
+  } else if (typeof assistantResponse === 'string') {
+    // Look for a URL in the string
+    const urlMatch = assistantResponse.match(/https?:\/\/\S+\.(png|jpg|jpeg|gif|webp)(\?\S*)?/)
+    if (urlMatch) {
+      messageAttachments = [{
         id: Date.now().toString(),
         name: 'generated.png',
         url: urlMatch[0],
@@ -244,18 +244,21 @@ export default function useChatFlow({ language, translations, sendHandler, table
         size: null
       }]
       // strip URL from text if it was the only thing
-      attachments = attachments.trim() === urlMatch[0] ? '' : attachments.replace(urlMatch[0], '').trim()
-      } else {
-      attachments = attachments
+      messageText = assistantResponse.trim() === urlMatch[0] ? '' : assistantResponse.replace(urlMatch[0], '').trim()
+    } else {
+      messageText = assistantResponse
     }
+  } else {
+    // Handle other response types (object, etc.)
+    messageText = assistantResponse?.text || assistantResponse?.content || String(assistantResponse)
   }
-
+  
   const botMsg = {
     id: (Date.now()+1).toString(),
-    content: text,
+    content: messageText,
     role: 'assistant',
     timestamp: new Date(),
-    attachments
+    attachments: messageAttachments
   }
 
   setMessages(m => [...m, botMsg])
