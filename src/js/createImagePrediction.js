@@ -56,17 +56,6 @@ const createImagePrediction = async (message, sessionId, apiKey, history = [], f
       history: history,
     };
 
-    // Add uploads to the request if we have processed files
-    if (processedUploads.length > 0) {
-      flowiseData.uploads = processedUploads;
-      console.log(`Sending ${processedUploads.length} files to Flowise`);
-    }
-
-    console.log('Flowise request payload:', JSON.stringify({
-      ...flowiseData,
-      uploads: flowiseData.uploads ? `[${flowiseData.uploads.length} files]` : undefined
-    }, null, 2));
-    
     const response = await fetch(
       `https://cloud.flowiseai.com/api/v1/prediction/394e957a-4c7f-4bd0-bc3f-e13f46df8c80`,
       {
@@ -78,6 +67,17 @@ const createImagePrediction = async (message, sessionId, apiKey, history = [], f
         body: JSON.stringify(flowiseData)
       }
     );
+    // Add uploads to the request if we have processed files
+    if (processedUploads.length > 0) {
+      flowiseData.uploads = processedUploads;
+      console.log(`Sending ${processedUploads.length} files to Flowise`);
+    }
+
+    console.log('Flowise request payload:', JSON.stringify({
+      ...flowiseData,
+      uploads: flowiseData.uploads ? `[${flowiseData.uploads.length} files]` : undefined
+    }, null, 2));
+    
 
     if (!response.ok) {
       const errorText = await response.text();
